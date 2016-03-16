@@ -11,22 +11,24 @@
 using namespace cv;
 using namespace std;
 int do_frame_diff(void);
-int playvid(void);
+int recordvid(void);
 
 int main(int argc, char** argv) {
-	return do_frame_diff();
-	//return playvid();
+	//return do_frame_diff();
+	return recordvid();
 }
 
 /** @function main */
 int do_frame_diff(void)
 {
 	string videosrc = "vid1.avi";
+	string livefeedsrc = "mmsh://sv04msmedia2.dot.ca.gov/D5-Los-Osos-Valley-Rd-at-101?MSWMExt=.asf";
 	//int min_area = 150;
 	Mat prev_frame, cur_frame, next_frame, this_frame,
 		source_frame, d1_frame, d2_frame, delta_frame, thresh_frame,
-		dialted_frame, with_keypoints_frame;
+		dilated_frame, with_keypoints_frame;
 	VideoCapture cap(videosrc);
+
 	Mat fgMask;
 	Ptr<BackgroundSubtractor> pMOG2 = createBackgroundSubtractorMOG2();
 
@@ -62,8 +64,6 @@ int do_frame_diff(void)
 	//prev_frame.copyTo(source_frame);
 	cvtColor(prev_frame, prev_frame, COLOR_BGR2GRAY, 0);
 	GaussianBlur(prev_frame, prev_frame, cvSize(7, 7), 0, 0);
-
-
 	prev_frame.copyTo(cur_frame);
 	prev_frame.copyTo(next_frame);
 	prev_frame.copyTo(next_frame);
@@ -92,36 +92,38 @@ int do_frame_diff(void)
 
 
 		//erode(fgMask, thresh_frame, getStructuringElement(MORPH_ELLIPSE, Size(3, 3), Point(-1, -1)));
-		//dilate(thresh_frame, dialted_frame, getStructuringElement(MORPH_ELLIPSE, Size(3,3), Point(-1,-1)));
+		//dilate(thresh_frame, dilated_frame, getStructuringElement(MORPH_ELLIPSE, Size(3,3), Point(-1,-1)));
 
 
+		//bitwise_not(fgMask, fgMask);
 
+		//detector->detect(fgMask, keypoints);
+		//drawKeypoints(source_frame, keypoints, with_keypoints_frame, Scalar(0, 255, 0), DrawMatchesFlags::DEFAULT);
 
+		threshold(fgMask, fgMask, 10, 255, CV_THRESH_BINARY);
+		
+		//imshow(source_window, with_keypoints_frame);
+		imshow(source_window, source_frame);
 
-		bitwise_not(dialted_frame, dialted_frame);
-
-		detector->detect(dialted_frame, keypoints);
-		drawKeypoints(source_frame, keypoints, with_keypoints_frame, Scalar(0, 255, 0), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-
-
-		imshow(source_window, with_keypoints_frame);
 		imshow(framd_window, this_frame);
 		imshow(thresh_window, fgMask);
-		imshow(test_window, dialted_frame);
+		//imshow(test_window, dilated_frame);
 
-		source_frame = this_frame;
-		if (waitKey(10) >= 0) break;
+		//source_frame = this_frame;
+		if (waitKey(67) >= 0) break;
 	}
 
 
 	return(0);
 }
 
-int playvid(void) {
+int recordvid(void) {
 	string videosrc = "vid1.avi";
 	string livefeedsrc = "mmsh://sv04msmedia2.dot.ca.gov/D5-Los-Osos-Valley-Rd-at-101?MSWMExt=.asf";
 	Mat frame;
 	VideoCapture cap(livefeedsrc);
+	VideoWriter writer("output2.avi",
+		VideoWriter::fourcc('X','V','I','D'), 15 , cvSize(640, 480), 1);
 
 	if (!cap.isOpened())
 		return -1;
@@ -135,9 +137,11 @@ int playvid(void) {
 		if (frame.empty()) {
 			break;
 		}
-
+		writer.write(frame);
 		imshow(source_window, frame);
 
 		if (waitKey(67) >= 0) break;
 	}
+	cap.release();
+	writer.release();
 }
